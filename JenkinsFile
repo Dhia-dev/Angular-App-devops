@@ -1,0 +1,59 @@
+pipeline{
+
+    agent any
+
+    tools {
+        nodejs 'Nodejs'
+    }
+
+    stages{
+
+        stage('Getting code from git'){
+            steps{
+            echo 'pulling ...';
+            git branch: 'main',
+            url : 'https://github.com/Dhia-dev/Angular-App-devops.git'
+            }
+        }
+
+        stage('Installing dependencies angular'){
+            steps{
+            echo 'Installing packages'
+            sh 'npm install'
+            }
+        }
+
+        stage('Building angular'){
+            steps{
+            echo 'building';
+
+            sh 'npm run build ';
+            }
+        }
+
+        stage('Creating angular image'){
+            steps{
+            echo 'building';
+            sh 'docker build -t dhiamejri/angular_app_devops:$BUILD_NUMBER .';
+            }
+        }
+
+        stage('Pushing angular to dockerhub'){
+
+            steps{
+              echo "push"
+              withCredentials([string(credentialsId: 'DockerId', variable: 'Docker')]) {
+                        sh 'docker login -u dhiamejri -p ${Docker}'
+                        sh 'docker image push dhiamejri/angular_app_devops:$BUILD_NUMBER'
+                }
+        }
+    }
+     stage("Docker-Compose") {
+          steps {
+              sh 'docker-compose up -d'
+             }
+       }
+
+    }
+
+}
